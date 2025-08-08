@@ -58,18 +58,18 @@ const Index = () => {
   const selectedBotData = bots.find(bot => bot.id === selectedBot);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-      <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-8 animate-fade-in">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-col gap-3 md:gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{selectedBotData?.name || 'Bot Analytics Dashboard'}</h1>
-            <p className="text-gray-600">Мониторинг и аналитика ботов в реальном времени</p>
+            <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-1 md:mb-2">{selectedBotData?.name || 'Bot Analytics Dashboard'}</h1>
+            <p className="text-sm md:text-base text-gray-600">Мониторинг и аналитика ботов в реальном времени</p>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <Select value={selectedBot} onValueChange={setSelectedBot}>
-              <SelectTrigger className="w-64">
+              <SelectTrigger className="w-full sm:w-64">
                 <SelectValue placeholder="Выберите бота" />
               </SelectTrigger>
               <SelectContent>
@@ -91,27 +91,27 @@ const Index = () => {
         </div>
 
         {/* Key Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-6">
           {metrics.map((metric, index) => (
             <Card key={index} className="hover:shadow-lg transition-shadow duration-200 animate-scale-in" style={{animationDelay: `${index * 100}ms`}}>
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-2 md:pb-3">
                 <div className="flex items-center justify-between">
-                  <Icon name={metric.icon} size={24} className="text-primary" />
-                  <div className={`text-sm font-medium ${metric.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <Icon name={metric.icon} size={16} className="text-primary md:w-6 md:h-6" />
+                  <div className={`text-xs md:text-sm font-medium ${metric.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {metric.change > 0 ? '+' : ''}{metric.change}%
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{metric.value.toLocaleString()}</div>
-                <p className="text-sm text-gray-600">{metric.title}</p>
+              <CardContent className="pt-0">
+                <div className="text-lg md:text-2xl font-bold text-gray-900 mb-1">{metric.value.toLocaleString()}</div>
+                <p className="text-xs md:text-sm text-gray-600">{metric.title}</p>
               </CardContent>
             </Card>
           ))}
         </div>
 
         {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           {/* Registrations Chart */}
           <Card>
             <CardHeader>
@@ -178,110 +178,76 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          {/* Trials Chart */}
+          {/* Combined Subscriptions Chart */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Icon name="Play" size={18} className="text-yellow-500" />
-                Пробники
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
+                <Icon name="Key" size={16} className="text-purple-500 md:w-5 md:h-5" />
+                Подписки
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-32 flex items-end justify-between gap-1">
-                {chartData.map((data, index) => {
-                  const maxValue = Math.max(...chartData.map(d => d.trials));
-                  const height = (data.trials / maxValue) * 100;
-                  
-                  return (
-                    <div key={index} className="flex flex-col items-center gap-1 flex-1">
-                      <div className="relative group">
-                        <div 
-                          className="w-full bg-gradient-to-t from-yellow-500 to-yellow-400 rounded-t transition-all duration-300 hover:from-yellow-600 hover:to-yellow-500 cursor-pointer"
-                          style={{ height: `${height}px`, minHeight: '3px' }}
-                        />
-                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                          {data.trials}
+              <div className="space-y-3">
+                <div className="flex gap-2 flex-wrap text-xs">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span className="text-gray-600">Пробники</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span className="text-gray-600">Ключи</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span className="text-gray-600">Продления</span>
+                  </div>
+                </div>
+                
+                <div className="h-24 md:h-32 flex items-end justify-between gap-0.5 md:gap-1">
+                  {chartData.map((data, index) => {
+                    const maxValue = Math.max(
+                      ...chartData.map(d => Math.max(d.trials, d.keys, d.renewals))
+                    );
+                    
+                    return (
+                      <div key={index} className="flex flex-col items-center gap-1 flex-1">
+                        <div className="relative group flex flex-col gap-0.5 w-full">
+                          {/* Trials */}
+                          <div 
+                            className="w-full bg-gradient-to-t from-yellow-500 to-yellow-400 transition-all duration-300 hover:from-yellow-600 hover:to-yellow-500 cursor-pointer rounded-t"
+                            style={{ height: `${(data.trials / maxValue) * 25}px`, minHeight: '2px' }}
+                          />
+                          {/* Keys */}
+                          <div 
+                            className="w-full bg-gradient-to-t from-purple-500 to-purple-400 transition-all duration-300 hover:from-purple-600 hover:to-purple-500 cursor-pointer"
+                            style={{ height: `${(data.keys / maxValue) * 25}px`, minHeight: '2px' }}
+                          />
+                          {/* Renewals */}
+                          <div 
+                            className="w-full bg-gradient-to-t from-orange-500 to-orange-400 transition-all duration-300 hover:from-orange-600 hover:to-orange-500 cursor-pointer"
+                            style={{ height: `${(data.renewals / maxValue) * 25}px`, minHeight: '2px' }}
+                          />
+                          
+                          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-1 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                            <div>П: {data.trials}</div>
+                            <div>К: {data.keys}</div>  
+                            <div>Пр: {data.renewals}</div>
+                          </div>
                         </div>
+                        <span className="text-xs text-gray-500">{data.day}</span>
                       </div>
-                      <span className="text-xs text-gray-500">{data.day}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Keys Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Icon name="Key" size={18} className="text-purple-500" />
-                Ключи
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-32 flex items-end justify-between gap-1">
-                {chartData.map((data, index) => {
-                  const maxValue = Math.max(...chartData.map(d => d.keys));
-                  const height = (data.keys / maxValue) * 100;
-                  
-                  return (
-                    <div key={index} className="flex flex-col items-center gap-1 flex-1">
-                      <div className="relative group">
-                        <div 
-                          className="w-full bg-gradient-to-t from-purple-500 to-purple-400 rounded-t transition-all duration-300 hover:from-purple-600 hover:to-purple-500 cursor-pointer"
-                          style={{ height: `${height}px`, minHeight: '3px' }}
-                        />
-                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                          {data.keys}
-                        </div>
-                      </div>
-                      <span className="text-xs text-gray-500">{data.day}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Renewals Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Icon name="RotateCcw" size={18} className="text-orange-500" />
-                Продления
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-32 flex items-end justify-between gap-1">
-                {chartData.map((data, index) => {
-                  const maxValue = Math.max(...chartData.map(d => d.renewals));
-                  const height = (data.renewals / maxValue) * 100;
-                  
-                  return (
-                    <div key={index} className="flex flex-col items-center gap-1 flex-1">
-                      <div className="relative group">
-                        <div 
-                          className="w-full bg-gradient-to-t from-orange-500 to-orange-400 rounded-t transition-all duration-300 hover:from-orange-600 hover:to-orange-500 cursor-pointer"
-                          style={{ height: `${height}px`, minHeight: '3px' }}
-                        />
-                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                          {data.renewals}
-                        </div>
-                      </div>
-                      <span className="text-xs text-gray-500">{data.day}</span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Calendar */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon name="Calendar" size={20} />
+          <Card className="md:col-span-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
+                <Icon name="Calendar" size={16} className="md:w-5 md:h-5" />
                 Диапазон дат
               </CardTitle>
             </CardHeader>
@@ -290,20 +256,20 @@ const Index = () => {
                 mode="range"
                 selected={dateRange}
                 onSelect={setDateRange}
-                className="rounded-md border-none"
+                className="rounded-md border-none text-xs md:text-sm mx-auto"
                 numberOfMonths={1}
               />
               
               {dateRange?.from && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                  <div className="text-sm font-medium text-gray-700 mb-2">
+                <div className="mt-3 p-2 md:p-3 bg-gray-50 rounded-lg">
+                  <div className="text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">
                     Период:
                   </div>
-                  <div className="text-xs text-gray-600 mb-2">
+                  <div className="text-xs text-gray-600 mb-1 md:mb-2">
                     {dateRange.from.toLocaleDateString('ru-RU')} - {dateRange.to?.toLocaleDateString('ru-RU') || 'выберите дату'}
                   </div>
                   {dateRange.to && (
-                    <div className="space-y-1 text-xs text-gray-600">
+                    <div className="space-y-0.5 md:space-y-1 text-xs text-gray-600">
                       <div>Дней: {Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) + 1}</div>
                       <div>Всего событий: 142</div>
                     </div>
@@ -315,7 +281,7 @@ const Index = () => {
         </div>
 
         {/* Detailed Analytics Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
