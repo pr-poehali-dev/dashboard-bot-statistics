@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -6,6 +6,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { DateRange } from 'react-day-picker';
+import { useTelegramAuth } from '@/hooks/useTelegramAuth';
+import { apiService, Bot, AnalyticsData } from '@/services/api';
 
 interface MetricData {
   title: string;
@@ -24,18 +26,63 @@ interface ChartData {
 }
 
 const Index = () => {
-  const [selectedBot, setSelectedBot] = useState('bot-1');
+  const { isAuthenticated, user, isLoading, error, getAuthHeaders } = useTelegramAuth();
+  const [selectedBot, setSelectedBot] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(2024, 7, 1),
     to: new Date(2024, 7, 7)
   });
+  
+  const [bots, setBots] = useState<Bot[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsData[]>([]);
+  const [botsLoading, setBotsLoading] = useState(false);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
-  const bots = [
-    { id: 'bot-1', name: 'Telegram Bot Alpha', status: 'active' },
-    { id: 'bot-2', name: 'Discord Bot Beta', status: 'active' },
-    { id: 'bot-3', name: 'WhatsApp Bot Gamma', status: 'inactive' },
-    { id: 'bot-4', name: 'Slack Bot Delta', status: 'active' },
-  ];
+  // Загрузка списка ботов
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    
+    const loadBots = async () => {
+      setBotsLoading(true);
+      try {
+        const userBots = await apiService.getUserBots(getAuthHeaders());
+        setBots(userBots);
+        if (userBots.length > 0) {
+          setSelectedBot(userBots[0].uid.toString());
+        }
+      } catch (err) {
+        console.error('Failed to load bots:', err);
+      } finally {
+        setBotsLoading(false);
+      }
+    };
+
+    loadBots();
+  }, [isAuthenticated, user, getAuthHeaders]);
+
+  // Загрузка аналитики при изменении бота или дат
+  useEffect(() => {
+    if (!selectedBot || !dateRange?.from || !dateRange?.to || !isAuthenticated) return;
+
+    const loadAnalytics = async () => {
+      setAnalyticsLoading(true);
+      try {
+        const data = await apiService.getBotAnalytics(
+          parseInt(selectedBot),
+          dateRange.from!.toISOString().split('T')[0],
+          dateRange.to!.toISOString().split('T')[0],
+          getAuthHeaders()
+        );
+        setAnalytics(data);
+      } catch (err) {
+        console.error('Failed to load analytics:', err);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+
+    loadAnalytics();
+  }, [selectedBot, dateRange, isAuthenticated, getAuthHeaders]);
 
   const metrics: MetricData[] = [
     { title: 'Регистрации пользователей', value: 1247, change: 12.5, icon: 'UserPlus' },
@@ -55,7 +102,58 @@ const Index = () => {
     { day: '7', registrations: 43, payments: 11, trials: 5, keys: 3, renewals: 2 },
   ];
 
-  const selectedBotData = bots.find(bot => bot.id === selectedBot);
+  const selectedBotData = bots.find(bot => bot.uid.toString() === selectedBot);
+
+  // Показ экрана загрузки при инициализации
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <Card className="w-full max-w-md mx-4">
+          <CardContent className="p-6 text-center">
+            <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <h2 className="text-lg font-semibold mb-2">Инициализация...</h2>
+            <p className="text-gray-600">Подключение к Telegram</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Показ ошибки авторизации
+  if (!isAuthenticated || error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <Card className="w-full max-w-md mx-4">
+          <CardContent className="p-6 text-center">
+            <Icon name="AlertTriangle" size={48} className="text-red-500 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold mb-2">Ошибка авторизации</h2>
+            <p className="text-gray-600 mb-4">{error || 'Необходимо запустить приложение через Telegram'}</p>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Попробовать снова
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Конвертируем данные аналитики для графиков
+  const chartData = analytics.length > 0 ? analytics.map((item, index) => ({
+    day: (index + 1).toString(),
+    registrations: item.registrations,
+    payments: item.payments,
+    trials: item.trials,
+    keys: item.keys,
+    renewals: item.renewals,
+  })) : [
+    { day: '1', registrations: 45, payments: 12, trials: 8, keys: 5, renewals: 3 },
+    { day: '2', registrations: 52, payments: 15, trials: 6, keys: 7, renewals: 4 },
+    { day: '3', registrations: 38, payments: 9, trials: 12, keys: 4, renewals: 2 },
+    { day: '4', registrations: 61, payments: 18, trials: 10, keys: 9, renewals: 5 },
+    { day: '5', registrations: 48, payments: 14, trials: 7, keys: 6, renewals: 3 },
+    { day: '6', registrations: 55, payments: 16, trials: 9, keys: 8, renewals: 4 },
+    { day: '7', registrations: 43, payments: 11, trials: 5, keys: 3, renewals: 2 },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 md:p-6">
@@ -63,30 +161,43 @@ const Index = () => {
         {/* Header */}
         <div className="flex flex-col gap-3 md:gap-4">
           <div>
-            <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-1 md:mb-2">{selectedBotData?.name || 'Bot Analytics Dashboard'}</h1>
+            <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-1 md:mb-2">{selectedBotData?.username || 'Bot Analytics Dashboard'}</h1>
             <p className="text-sm md:text-base text-gray-600">Мониторинг и аналитика ботов в реальном времени</p>
+            {user && (
+              <div className="flex items-center gap-2 mt-2">
+                <Icon name="User" size={16} className="text-gray-500" />
+                <span className="text-sm text-gray-500">{user.first_name} {user.last_name}</span>
+              </div>
+            )}
           </div>
           
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <Select value={selectedBot} onValueChange={setSelectedBot}>
+            <Select value={selectedBot} onValueChange={setSelectedBot} disabled={botsLoading}>
               <SelectTrigger className="w-full sm:w-64">
-                <SelectValue placeholder="Выберите бота" />
+                <SelectValue placeholder={botsLoading ? "Загрузка..." : "Выберите бота"} />
               </SelectTrigger>
               <SelectContent>
                 {bots.map((bot) => (
-                  <SelectItem key={bot.id} value={bot.id}>
+                  <SelectItem key={bot.uid} value={bot.uid.toString()}>
                     <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${bot.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
-                      {bot.name}
+                      <div className={`w-2 h-2 rounded-full ${bot.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-400'}`} />
+                      @{bot.username}
                     </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             
-            <Badge variant={selectedBotData?.status === 'active' ? 'default' : 'secondary'}>
-              {selectedBotData?.status === 'active' ? 'Активен' : 'Неактивен'}
+            <Badge variant={selectedBotData?.status === 'ACTIVE' ? 'default' : 'secondary'}>
+              {selectedBotData?.status === 'ACTIVE' ? 'Активен' : 'Неактивен'}
             </Badge>
+            
+            {analyticsLoading && (
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="animate-spin w-4 h-4 border border-gray-300 border-t-transparent rounded-full"></div>
+                Загрузка данных...
+              </div>
+            )}
           </div>
         </div>
 
