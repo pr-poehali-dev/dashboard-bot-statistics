@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import { DateRange } from 'react-day-picker';
 
 interface MetricData {
   title: string;
@@ -24,7 +25,10 @@ interface ChartData {
 
 const Index = () => {
   const [selectedBot, setSelectedBot] = useState('bot-1');
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(2024, 7, 1),
+    to: new Date(2024, 7, 7)
+  });
 
   const bots = [
     { id: 'bot-1', name: 'Telegram Bot Alpha', status: 'active' },
@@ -59,7 +63,7 @@ const Index = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Bot Analytics Dashboard</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{selectedBotData?.name || 'Bot Analytics Dashboard'}</h1>
             <p className="text-gray-600">Мониторинг и аналитика ботов в реальном времени</p>
           </div>
           
@@ -106,67 +110,169 @@ const Index = () => {
           ))}
         </div>
 
-        {/* Charts and Calendar Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Interactive Chart */}
-          <Card className="lg:col-span-2">
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {/* Registrations Chart */}
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon name="BarChart3" size={20} />
-                Динамика метрик по дням
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Icon name="UserPlus" size={18} className="text-blue-500" />
+                Регистрации
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex gap-2 flex-wrap">
-                  <Button size="sm" variant="outline" className="text-xs">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
-                    Регистрации
-                  </Button>
-                  <Button size="sm" variant="outline" className="text-xs">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                    Оплаты
-                  </Button>
-                  <Button size="sm" variant="outline" className="text-xs">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full mr-1"></div>
-                    Пробники
-                  </Button>
-                  <Button size="sm" variant="outline" className="text-xs">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full mr-1"></div>
-                    Ключи
-                  </Button>
-                  <Button size="sm" variant="outline" className="text-xs">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full mr-1"></div>
-                    Продления
-                  </Button>
-                </div>
-                
-                {/* Simple Bar Chart */}
-                <div className="h-64 flex items-end justify-between gap-2 border-b border-gray-200 pb-4">
-                  {chartData.map((data, index) => {
-                    const maxValue = Math.max(...chartData.map(d => d.registrations));
-                    const height = (data.registrations / maxValue) * 200;
-                    
-                    return (
-                      <div key={index} className="flex flex-col items-center gap-2 flex-1">
-                        <div className="relative group">
-                          <div 
-                            className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t transition-all duration-300 hover:from-blue-600 hover:to-blue-500 cursor-pointer"
-                            style={{ height: `${height}px`, minHeight: '4px' }}
-                          />
-                          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                            {data.registrations}
-                          </div>
+              <div className="h-32 flex items-end justify-between gap-1">
+                {chartData.map((data, index) => {
+                  const maxValue = Math.max(...chartData.map(d => d.registrations));
+                  const height = (data.registrations / maxValue) * 100;
+                  
+                  return (
+                    <div key={index} className="flex flex-col items-center gap-1 flex-1">
+                      <div className="relative group">
+                        <div 
+                          className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t transition-all duration-300 hover:from-blue-600 hover:to-blue-500 cursor-pointer"
+                          style={{ height: `${height}px`, minHeight: '3px' }}
+                        />
+                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          {data.registrations}
                         </div>
-                        <span className="text-sm text-gray-600">{data.day}</span>
                       </div>
-                    );
-                  })}
-                </div>
-                
-                <div className="text-sm text-gray-500 text-center">
-                  Последние 7 дней • Регистрации пользователей
-                </div>
+                      <span className="text-xs text-gray-500">{data.day}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Payments Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Icon name="CreditCard" size={18} className="text-green-500" />
+                Оплаты
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-32 flex items-end justify-between gap-1">
+                {chartData.map((data, index) => {
+                  const maxValue = Math.max(...chartData.map(d => d.payments));
+                  const height = (data.payments / maxValue) * 100;
+                  
+                  return (
+                    <div key={index} className="flex flex-col items-center gap-1 flex-1">
+                      <div className="relative group">
+                        <div 
+                          className="w-full bg-gradient-to-t from-green-500 to-green-400 rounded-t transition-all duration-300 hover:from-green-600 hover:to-green-500 cursor-pointer"
+                          style={{ height: `${height}px`, minHeight: '3px' }}
+                        />
+                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          {data.payments}
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500">{data.day}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Trials Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Icon name="Play" size={18} className="text-yellow-500" />
+                Пробники
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-32 flex items-end justify-between gap-1">
+                {chartData.map((data, index) => {
+                  const maxValue = Math.max(...chartData.map(d => d.trials));
+                  const height = (data.trials / maxValue) * 100;
+                  
+                  return (
+                    <div key={index} className="flex flex-col items-center gap-1 flex-1">
+                      <div className="relative group">
+                        <div 
+                          className="w-full bg-gradient-to-t from-yellow-500 to-yellow-400 rounded-t transition-all duration-300 hover:from-yellow-600 hover:to-yellow-500 cursor-pointer"
+                          style={{ height: `${height}px`, minHeight: '3px' }}
+                        />
+                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          {data.trials}
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500">{data.day}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Keys Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Icon name="Key" size={18} className="text-purple-500" />
+                Ключи
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-32 flex items-end justify-between gap-1">
+                {chartData.map((data, index) => {
+                  const maxValue = Math.max(...chartData.map(d => d.keys));
+                  const height = (data.keys / maxValue) * 100;
+                  
+                  return (
+                    <div key={index} className="flex flex-col items-center gap-1 flex-1">
+                      <div className="relative group">
+                        <div 
+                          className="w-full bg-gradient-to-t from-purple-500 to-purple-400 rounded-t transition-all duration-300 hover:from-purple-600 hover:to-purple-500 cursor-pointer"
+                          style={{ height: `${height}px`, minHeight: '3px' }}
+                        />
+                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          {data.keys}
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500">{data.day}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Renewals Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Icon name="RotateCcw" size={18} className="text-orange-500" />
+                Продления
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-32 flex items-end justify-between gap-1">
+                {chartData.map((data, index) => {
+                  const maxValue = Math.max(...chartData.map(d => d.renewals));
+                  const height = (data.renewals / maxValue) * 100;
+                  
+                  return (
+                    <div key={index} className="flex flex-col items-center gap-1 flex-1">
+                      <div className="relative group">
+                        <div 
+                          className="w-full bg-gradient-to-t from-orange-500 to-orange-400 rounded-t transition-all duration-300 hover:from-orange-600 hover:to-orange-500 cursor-pointer"
+                          style={{ height: `${height}px`, minHeight: '3px' }}
+                        />
+                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          {data.renewals}
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500">{data.day}</span>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -176,32 +282,32 @@ const Index = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Icon name="Calendar" size={20} />
-                Календарь
+                Диапазон дат
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
                 className="rounded-md border-none"
+                numberOfMonths={1}
               />
               
-              {selectedDate && (
+              {dateRange?.from && (
                 <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                   <div className="text-sm font-medium text-gray-700 mb-2">
-                    {selectedDate.toLocaleDateString('ru-RU', { 
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
+                    Период:
                   </div>
-                  <div className="space-y-1 text-xs text-gray-600">
-                    <div>Регистрации: 45</div>
-                    <div>Оплаты: 12</div>
-                    <div>Активации: 8</div>
+                  <div className="text-xs text-gray-600 mb-2">
+                    {dateRange.from.toLocaleDateString('ru-RU')} - {dateRange.to?.toLocaleDateString('ru-RU') || 'выберите дату'}
                   </div>
+                  {dateRange.to && (
+                    <div className="space-y-1 text-xs text-gray-600">
+                      <div>Дней: {Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) + 1}</div>
+                      <div>Всего событий: 142</div>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
